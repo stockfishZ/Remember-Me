@@ -49,7 +49,7 @@ Instead of drowning the model's context with 1,000 full skill definitions, the a
 Clone the repository and run the self-bootstrapper:
 
 ```bash
-git clone https://github.com/your-username/remember-me.git
+git clone https://github.com/stockfishZ/Remember-Me.git
 cd remember-me
 python install.py
 ```
