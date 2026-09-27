@@ -1,7 +1,7 @@
-# Remember-Me: Skill Recall Reflex (Claude Code Directive)
+# Remember-Me: Skill Recall Reflex (Codex / AGENTS.md Directive)
 
-## Instructions for Claude Code
-Add the following block to your `~/.claude/CLAUDE.md` or project `CLAUDE.md` (or run `python install.py` / `python sync_skills_index.py` to auto-inject and keep updated):
+## Instructions for Codex / Open-Source CLI Agents
+Add the following block to your project's `AGENTS.md` or global `~/.codex/AGENTS.md` / `~/.agents/AGENTS.md` (or run `python install.py` / `python sync_skills_index.py` to auto-inject and keep updated):
 
 ```markdown
 <!-- REMEMBER-ME-START -->
