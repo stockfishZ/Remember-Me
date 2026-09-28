@@ -45,7 +45,7 @@ offscreen.height = NATIVE_H;
 const ctx = offscreen.getContext('2d');
 ctx.imageSmoothingEnabled = false;
 
-const TOTAL_FRAMES = 1320;
+const TOTAL_FRAMES = 1080;
 const FPS = 60;
 
 // Universal Skill Names from real catalog (48 skills, 6x8 grid)
@@ -169,15 +169,6 @@ const PARTICLES = Array.from({ length: 32 }, (_, i) => ({
   speed: 0.18 + seededRandom(i * 7 + 3) * 0.35,
   size: (i % 3 === 0) ? 2 : 1,
   color: (i % 2 === 0) ? PALETTE.magicCyan : PALETTE.hudGold
-}));
-
-// Confetti Particles for Celebrations
-const CONFETTI = Array.from({ length: 48 }, (_, i) => ({
-  x: seededRandom(i * 11 + 1) * NATIVE_W,
-  yOffset: seededRandom(i * 11 + 2) * 200,
-  speed: 1.2 + seededRandom(i * 11 + 3) * 1.5,
-  wobbleSpeed: 2.0 + seededRandom(i * 11 + 4) * 3.0,
-  color: ["#F1C40F", "#E74C3C", "#2ECC71", "#00F0FF", "#9B59B6", "#FFFFFF"][i % 6]
 }));
 
 // ============================================================================
@@ -316,7 +307,7 @@ function drawBookshelf(frame) {
   ctx.fillRect(sx + sw - 9, sy + 5, 3, 3);
 
   // Vault Apex Crystal
-  const crystalGlow = (frame >= 210 && frame < 450) || (frame >= 900);
+  const crystalGlow = (frame >= 210 && frame < 420) || (frame >= 630);
   ctx.fillStyle = crystalGlow ? PALETTE.magicCyan : PALETTE.hudGold;
   ctx.fillRect(sx + Math.floor(sw / 2) - 4, sy - 4, 8, 8);
   ctx.fillStyle = "#FFFFFF";
@@ -356,9 +347,9 @@ function drawBookshelf(frame) {
       const fillThreshold = 270 + slotGlobalIdx * 4.5;
       const isFilled = frame >= fillThreshold;
 
-      // CRITICAL DETAIL: In Act 4 (frame >= 900), Shelf 2, Book 3 (s = 1, b = 2) is PULLED!
+      // CRITICAL DETAIL: In Act 4 (frame >= 630), Shelf 2, Book 3 (s = 1, b = 2) is PULLED!
       // That exact slot MUST BE SHOWN EMPTY (visible gap with dark outline) throughout Act 4!
-      const isTargetSlotPulled = (frame >= 900 && s === 1 && b === 2);
+      const isTargetSlotPulled = (frame >= 630 && s === 1 && b === 2);
 
       if (isTargetSlotPulled) {
         // Deep empty gap where the book was pulled
@@ -405,9 +396,9 @@ function drawBookshelf(frame) {
     }
   }
 
-  // Vault settling magical golden border aura (frames 390 to 450)
-  if (frame >= 390 && frame < 450) {
-    const auraAlpha = Math.sin((frame - 390) / 60 * Math.PI) * 0.45;
+  // Vault settling magical golden border aura (frames 380 to 420)
+  if (frame >= 380 && frame < 420) {
+    const auraAlpha = Math.sin((frame - 380) / 40 * Math.PI) * 0.45;
     ctx.strokeStyle = `rgba(241, 196, 15, ${auraAlpha})`;
     ctx.lineWidth = 2;
     ctx.strokeRect(sx - 2, sy - 2, sw + 4, sh + 4);
@@ -503,11 +494,13 @@ function drawClaudeMascot(cx, cy, state, hatAngle = 0, scaleX = 1.0, scaleY = 1.
             }
           }
         } else if (eyeState === "panic") {
-          // Wide white sclera with small pupil looking rightward at avalanche
-          ctx.fillStyle = "#FFFFFF";
-          ctx.fillRect(px, py, PIXEL_SCALE, PIXEL_SCALE);
+          // Solid black eyes expanded bigger with a cute 1px white shine highlight in top-left
           ctx.fillStyle = "#180C14";
-          ctx.fillRect(px + 1, py + 1, 2, 2);
+          ctx.fillRect(px - 1, py - 1, PIXEL_SCALE + 2, PIXEL_SCALE + 2);
+          if (r === 2) {
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(px - 1, py - 1, 1, 1);
+          }
         } else if (eyeState === "glow_cyan") {
           // Radiant glowing cyan eyes for spell targeting
           ctx.fillStyle = PALETTE.magicCyan;
@@ -822,60 +815,6 @@ function drawActivationBanner(x, y, w, h, frame) {
   ctx.restore();
 }
 
-// 9. Retro RPG Results Dialogue Box (Act 3.5 Frames 450 to 750)
-function drawRPGResultsPopup(x, y, w, h, frame) {
-  ctx.save();
-
-  // Drop Shadow
-  ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
-  ctx.fillRect(x + 3, y + 3, w, h);
-
-  // Deep Navy Blue RPG Window
-  ctx.fillStyle = PALETTE.hudBlueBg;
-  ctx.fillRect(x, y, w, h);
-
-  // Double Border with Gold and White
-  ctx.fillStyle = PALETTE.hudGold;
-  ctx.fillRect(x, y, w, 2);
-  ctx.fillRect(x, y + h - 2, w, 2);
-  ctx.fillRect(x, y, 2, h);
-  ctx.fillRect(x + w - 2, y, 2, h);
-
-  ctx.fillStyle = PALETTE.hudBlueBorder;
-  ctx.fillRect(x + 3, y + 3, w - 6, 1);
-  ctx.fillRect(x + 3, y + h - 4, w - 6, 1);
-  ctx.fillRect(x + 3, y + 3, 1, h - 6);
-  ctx.fillRect(x + w - 4, y + 3, 1, h - 6);
-
-  // Corner Gems
-  ctx.fillStyle = PALETTE.magicCyan;
-  ctx.fillRect(x, y, 4, 4);
-  ctx.fillRect(x + w - 4, y, 4, 4);
-  ctx.fillRect(x, y + h - 4, 4, 4);
-  ctx.fillRect(x + w - 4, y + h - 4, 4, 4);
-
-  // Title: * REMEMBER-ME V2 INDEXED *
-  drawBitmapText("* REMEMBER-ME V2 INDEXED *", x + 38, y + 14, PALETTE.hudGold, 1);
-
-  // Line 1: ALL SKILLS 100% REACHABLE
-  drawBitmapText("• ALL SKILLS 100% REACHABLE", x + 20, y + 38, PALETTE.hudGreen, 1);
-
-  // Line 2: ZERO TRUNCATION
-  drawBitmapText("• ZERO TRUNCATION", x + 20, y + 56, PALETTE.magicCyan, 1);
-
-  // Line 3: 0 DISK READS
-  drawBitmapText("• 0 DISK READS", x + 20, y + 74, PALETTE.hudWhite, 1);
-
-  // Footer: CONTEXT: 2% (4,100 TOKENS SAVED)
-  ctx.fillStyle = "#16254F";
-  ctx.fillRect(x + 14, y + 96, w - 28, 22);
-  ctx.fillStyle = PALETTE.hudGold;
-  ctx.fillRect(x + 14, y + 96, w - 28, 1);
-  drawBitmapText("CONTEXT: 2% (4,100 TOKENS SAVED)", x + 22, y + 103, PALETTE.hudGold, 1);
-
-  ctx.restore();
-}
-
 // 10. Top RPG Status HUD
 function drawTopHUD(frame, contextPct, warningAlert = false) {
   const hx = 6;
@@ -1052,9 +991,9 @@ function drawBitmapText(str, startX, startY, color = "#FFFFFF", scale = 1, lineS
 }
 
 // ============================================================================
-// MASTER ANIMATION TIMELINE (1,320 frames = 22.000s at 60 FPS)
+// MASTER ANIMATION TIMELINE (1,080 frames = 18.000s at 60 FPS)
 // ============================================================================
-window.renderFrame = function(frameIndex, totalFrames = 1320) {
+window.renderFrame = function(frameIndex, totalFrames = 1080) {
   const frame = clamp(frameIndex, 0, totalFrames - 1);
 
   ctx.fillStyle = PALETTE.bgDark;
@@ -1132,9 +1071,9 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
       hatAngle = -0.3;
     }
   }
-  // ACT 3: Hat Equips, Wizard Hover, Spell Casting & Vortex (Frames 210 to 450)
-  else if (frame < 450) {
-    if (frame < 390) {
+  // ACT 3: Hat Equips, Wizard Hover, Spell Casting & Vortex (Frames 210 to 420)
+  else if (frame < 420) {
+    if (frame < 380) {
       // Claude casting spell with arms raised and waving wand
       mascotState = "cast";
       eyeState = "open";
@@ -1143,39 +1082,30 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
       wandGlow = true;
 
       // Context meter drops rapidly from 98% -> 2% [OPTIMAL]
-      const dropProg = clamp((frame - 230) / 150, 0, 1);
+      const dropProg = clamp((frame - 230) / 140, 0, 1);
       contextUsage = Math.floor(lerp(98, 2, easeInOutQuad(dropProg)));
     } else {
-      // Frames 390-450: Shelves locked in, vault aura settles
+      // Frames 380-420: Shelves locked in, vault aura settles
       mascotState = "wizard";
       eyeState = "open";
       mascotY = 135 + Math.sin(frame * 0.06) * 2.0;
       hatAngle = Math.sin(frame * 0.08) * 0.12;
+      wandGlow = false;
       contextUsage = 2;
     }
   }
-  // ACT 3.5: RPG Results Popup (Frames 450 to 750)
-  else if (frame < 750) {
-    // Claude floating proudly on the left side of popup
-    mascotX = 75;
-    mascotY = 145 + Math.sin(frame * 0.06) * 1.5;
-    mascotState = "victory";
-    eyeState = (frame % 80 < 25) ? "wink" : "open";
-    hatAngle = Math.sin(frame * 0.06) * 0.1;
-    contextUsage = 2;
-  }
-  // ACT 4: Interactive Ending - Terminal Typing (Frames 750 to 900)
-  else if (frame < 900) {
+  // ACT 4: Retro Terminal Box & Typing (Frames 420 to 630)
+  else if (frame < 630) {
     // Claude descends / hovers gently at x = 110, y = 180
-    const descT = clamp((frame - 750) / 40, 0, 1);
-    mascotY = lerp(145, 180, easeOutQuad(descT)) + Math.sin(frame * 0.06) * 1.2;
+    const descT = clamp((frame - 420) / 35, 0, 1);
+    mascotY = lerp(135, 180, easeOutQuad(descT)) + Math.sin(frame * 0.06) * 1.2;
     mascotState = "wizard";
     eyeState = "open";
     hatAngle = Math.sin(frame * 0.06) * 0.1;
     contextUsage = 2;
   }
-  // ACT 4: Claude Points Wand, Book Retrieves from Empty Shelf (Frames 900 to 1050)
-  else if (frame < 1050) {
+  // ACT 5: Claude Points Wand, Book Retrieves from Empty Shelf (Frames 630 to 840)
+  else if (frame < 840) {
     mascotY = 180 + Math.sin(frame * 0.07) * 1.5;
     mascotState = "point_wand"; // Right arm pointing wand at Bookshelf Vault!
     eyeState = "glow_cyan"; // Wizard eyes light up with cyan glow / sparkle
@@ -1183,15 +1113,15 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
     wandGlow = true;
     contextUsage = 2;
   }
-  // ACT 4: Book Arrives in Hand & Activation Banner (Frames 1050 to 1200)
-  else if (frame < 1200) {
+  // ACT 6: Book Arrives in Hand & Activation Banner (Frames 840 to 960)
+  else if (frame < 960) {
     mascotY = 180 + Math.sin(frame * 0.06) * 1.2;
     mascotState = "holding_book"; // Holding glowing book in both hands
     eyeState = "open";
     hatAngle = Math.sin(frame * 0.06) * 0.1;
     contextUsage = 2;
   }
-  // ACT 4: Book Opens Facing Forward & Radiant Light Rays (Frames 1200 to 1320)
+  // ACT 7: Book Opens Facing Forward & Radiant Light Rays (Frames 960 to 1080)
   else {
     mascotY = 180 + Math.sin(frame * 0.05) * 1.0;
     mascotState = "open_book"; // Front facing open book
@@ -1221,18 +1151,6 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
       ctx.fillStyle = ringColors[r % ringColors.length];
       ctx.fillRect(Math.floor(px) - 1, Math.floor(py) - 1, 3, 3);
     }
-  }
-
-  // Pulsing Magic Summoning Circle beneath Claude during Act 3 Casting
-  if (frame >= 210 && frame < 390) {
-    ctx.save();
-    ctx.strokeStyle = "rgba(0, 240, 255, 0.45)";
-    ctx.lineWidth = 1;
-    const ringRadius = 26 + Math.sin(frame * 0.15) * 4;
-    ctx.strokeRect(mascotX - ringRadius, 205 - 5, ringRadius * 2, 10);
-    ctx.strokeStyle = "rgba(241, 196, 15, 0.35)";
-    ctx.strokeRect(mascotX - ringRadius * 0.7, 205 - 3, ringRadius * 1.4, 6);
-    ctx.restore();
   }
 
   // Draw Badges: Act 1 Avalanche Drop -> Chaotic Pile -> Act 3 Vortex into Vault
@@ -1275,7 +1193,7 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
     } 
     // Act 3: 3D Centripetal Vortex Swirling into the Bookshelf Vault
     // Swirling path is strictly maintained between x = 230 and 420
-    else if (frame < 450) {
+    else if (frame < 420) {
       const vortexT = (frame - b.spiralStart) / 65.0;
       if (vortexT < 1.0) {
         const easeT = easeInCubic(vortexT);
@@ -1302,28 +1220,28 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
   // 4. Draw Mascot (Claude)
   drawClaudeMascot(mascotX, mascotY, mascotState, hatAngle, mascotScaleX, mascotScaleY, eyeState, wandGlow);
 
-  // 5. Act 4: Retro Terminal Box (Frames 750 to 900)
-  if (frame >= 750 && frame < 900) {
-    const textProg = (frame - 780) / 100.0;
+  // 5. Act 4: Retro Terminal Box (Frames 420 to 630)
+  if (frame >= 420 && frame < 630) {
+    const textProg = (frame - 440) / 140.0;
     drawTerminalBox(48, 32, 275, 48, frame, textProg);
   }
 
-  // 6. Act 4: Golden Book [UI-UX-PRO-MAX] Retrieval with Harmonic Spring Physics
+  // 6. Act 5: Golden Book [UI-UX-PRO-MAX] Retrieval with Harmonic Spring Physics (Frames 630 to 840)
   // Shelf 2, Book 3 starts at (391, 103) and harmonic travels to Claude's hand at (128, 172)
-  if (frame >= 900 && frame < 1050) {
+  if (frame >= 630 && frame < 840) {
     const targetHandX = 128;
     const targetHandY = 172;
     const shelfSourceX = 391;
     const shelfSourceY = 103;
 
-    if (frame < 920) {
+    if (frame < 650) {
       // Glow and pulse in slot before leaving
-      const pulseGlow = Math.sin((frame - 900) * 0.3) * 0.4 + 0.6;
+      const pulseGlow = Math.sin((frame - 630) * 0.3) * 0.4 + 0.6;
       ctx.fillStyle = `rgba(241, 196, 15, ${pulseGlow})`;
       ctx.fillRect(shelfSourceX - 2, shelfSourceY - 2, 17, 24);
     } else {
       // Traveling with Harmonic Spring Physics & Arc
-      const t = clamp((frame - 920) / 120.0, 0, 1);
+      const t = clamp((frame - 650) / 140.0, 0, 1);
       const springT = getSpringProgress(t, 0.65, 5.5);
       const arcY = -Math.sin(t * Math.PI) * 38; // Upward buoyant arc
 
@@ -1343,19 +1261,19 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
     }
   }
 
-  // 7. Act 4: Book in Claude's Hand & Activated HUD Banner (Frames 1050 to 1200)
-  if (frame >= 1050 && frame < 1200) {
+  // 7. Act 6: Book in Claude's Hand & Activated HUD Banner (Frames 840 to 960)
+  if (frame >= 840 && frame < 960) {
     drawFloatingBook(128, 174, frame, 0.9, 0.05);
     drawActivationBanner(55, 88, 265, 26, frame);
   }
 
-  // 8. Act 4 Climax: Book Opens with Radiant Magic Light Rays (Frames 1200 to 1320)
-  if (frame >= 1200) {
-    const rayIntensity = clamp((frame - 1200) / 60, 0, 1);
+  // 8. Act 7 Climax: Book Opens with Radiant Magic Light Rays (Frames 960 to 1080)
+  if (frame >= 960) {
+    const rayIntensity = clamp((frame - 960) / 60, 0, 1);
     drawOpenSpellbookRays(128, 174, frame, rayIntensity);
   }
 
-  // 9. Ambient & Celebration Particles
+  // 9. Ambient Floating Particles
   PARTICLES.forEach((p, pi) => {
     const py = (p.y - frame * p.speed) % NATIVE_H;
     const px = (p.x + Math.sin(frame * 0.05 + pi) * 10) % NATIVE_W;
@@ -1363,43 +1281,15 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
     ctx.fillRect(Math.floor(px), Math.floor((py < 0) ? py + NATIVE_H : py), p.size, p.size);
   });
 
-  // Confetti in Act 3.5 Victory Celebration (Frames 450 to 750)
-  if (frame >= 450 && frame < 750) {
-    const victoryAge = frame - 450;
-    CONFETTI.forEach((c, ci) => {
-      const cy = ((victoryAge * c.speed + c.yOffset) % (NATIVE_H + 20)) - 10;
-      const cx = c.x + Math.sin(victoryAge * 0.05 + ci) * 12;
-      ctx.fillStyle = c.color;
-      ctx.fillRect(Math.floor(cx), Math.floor(cy), 2, 2);
-    });
-  }
-
-  // 10. RPG Results Popup (Frames 450 to 750)
-  // Positioned at x = 135 to leave Claude visible and proud on the left (x = 75)
-  if (frame >= 450 && frame < 750) {
-    let popupScale = 1.0;
-    if (frame < 470) {
-      popupScale = easeOutCubic((frame - 450) / 20);
-    } else if (frame > 730) {
-      popupScale = 1.0 - easeInQuad((frame - 730) / 20);
-    }
-    
-    ctx.save();
-    ctx.translate(300, 128);
-    ctx.scale(popupScale, popupScale);
-    drawRPGResultsPopup(-165, -72, 330, 144, frame);
-    ctx.restore();
-  }
-
-  // 11. Top RPG HUD
+  // 10. Top RPG HUD
   drawTopHUD(frame, contextUsage, contextUsage > 80);
 
   ctx.restore();
 
-  // 12. RADIANT BLOOM & FULL SCREEN WHITEOUT (Frames 1260 to 1319) & SEAMLESS LOOP FADE (0 to 20)
-  // Radiant bloom starts at frame 1260 (21.0s) and builds smoothly to pure full-screen whiteout at frame 1319 (22.0s)
-  if (frame >= 1260) {
-    const whiteoutProg = clamp((frame - 1260) / 59.0, 0, 1);
+  // 11. RADIANT BLOOM & FULL SCREEN WHITEOUT (Frames 1020 to 1079) & SEAMLESS LOOP FADE (0 to 20)
+  // Radiant bloom starts at frame 1020 (17.0s) and builds smoothly to pure full-screen whiteout at frame 1079 (18.0s)
+  if (frame >= 1020) {
+    const whiteoutProg = clamp((frame - 1020) / 59.0, 0, 1);
 
     // Radiant expanding flare gradient
     const flareR = whiteoutProg * NATIVE_W * 1.2;
@@ -1411,7 +1301,7 @@ window.renderFrame = function(frameIndex, totalFrames = 1320) {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, NATIVE_W, NATIVE_H);
 
-    // Pure brilliant whiteout layer building to 100% white at frame 1319
+    // Pure brilliant whiteout layer building to 100% white at frame 1079
     const pureWhiteAlpha = easeInQuad(whiteoutProg);
     ctx.fillStyle = `rgba(255, 255, 255, ${pureWhiteAlpha})`;
     ctx.fillRect(0, 0, NATIVE_W, NATIVE_H);

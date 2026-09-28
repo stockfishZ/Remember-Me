@@ -6,7 +6,7 @@ const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge
 const SAMPLES_DIR = path.join(__dirname, "sample_frames");
 fs.mkdirSync(SAMPLES_DIR, { recursive: true });
 
-const testFrames = [0, 150, 260, 420, 600, 850, 1100, 1260];
+const testFrames = [0, 80, 180, 300, 500, 720, 900, 1020];
 
 (async () => {
   try {
@@ -29,7 +29,7 @@ const testFrames = [0, 150, 260, 420, 600, 850, 1100, 1260];
     });
 
     for (const f of testFrames) {
-      await page.evaluate((idx) => window.renderFrame(idx, 1320), f);
+      await page.evaluate((idx) => window.renderFrame(idx, 1080), f);
       const dataUrl = await page.evaluate(() => document.getElementById("canvas").toDataURL("image/jpeg", 0.95));
       const base64Data = dataUrl.replace(/^data:image\/jpeg;base64,/, "");
       const outPath = path.join(SAMPLES_DIR, `sample_frame_${String(f).padStart(4, "0")}.jpg`);

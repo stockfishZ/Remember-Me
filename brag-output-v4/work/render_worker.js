@@ -5,7 +5,7 @@ const path = require("path");
 const [,, startFrameStr, endFrameStr, framesDir] = process.argv;
 const startFrame = parseInt(startFrameStr, 10);
 const endFrame = parseInt(endFrameStr, 10);
-const totalFrames = 1320;
+const totalFrames = 1080;
 
 (async () => {
   try {

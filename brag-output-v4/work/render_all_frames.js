@@ -2,10 +2,10 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
-const TOTAL_FRAMES = 1320;
+const TOTAL_FRAMES = 1080;
 const WORKERS = 6;
 const FRAMES_DIR = path.join(__dirname, "frames");
-const POSTER_FRAME_INDEX = 1140;
+const POSTER_FRAME_INDEX = 900;
 const POSTER_OUTPUT_PATH = path.resolve(__dirname, "..", "poster.jpg");
 
 fs.mkdirSync(FRAMES_DIR, { recursive: true });
@@ -58,7 +58,7 @@ Promise.all(workerPromises)
       console.error(`ERROR: ${missing} frames are missing!`);
       process.exit(1);
     }
-    console.log(`Verification: All 1,320 frames verified present on disk.`);
+    console.log(`Verification: All 1,080 frames verified present on disk.`);
 
     // Generate poster.jpg from frame 1260 (settled victory frame)
     const posterSrc = path.join(FRAMES_DIR, `frame_${String(POSTER_FRAME_INDEX).padStart(4, "0")}.jpg`);

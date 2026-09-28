@@ -1,10 +1,10 @@
 """
 generate_audio.py
 Authentic 16-bit / 8-bit Chiptune RPG Soundtrack + High-Fidelity Retro Foley
-for RememberMe v2 Launch Video (v4 Edition).
+for RememberMe v2 Launch Video (18.0s / 1,080 Frames Edition).
 
 Sample Rate: 44,100 Hz, 16-bit Stereo PCM WAV.
-Total Duration: exactly 22.000 seconds (970,200 samples).
+Total Duration: exactly 18.000 seconds (793,800 samples).
 Peak normalized to -0.5 dB (~0.944), soft limiter (tanh) for zero clipping,
 and perfectly click-free loop transition.
 """
@@ -17,8 +17,8 @@ import os
 import shutil
 
 SAMPLE_RATE = 44100
-DURATION = 22.0
-TOTAL_SAMPLES = int(SAMPLE_RATE * DURATION) # 970,200 samples
+DURATION = 18.0
+TOTAL_SAMPLES = int(SAMPLE_RATE * DURATION) # 793,800 samples
 
 left_channel = [0.0] * TOTAL_SAMPLES
 right_channel = [0.0] * TOTAL_SAMPLES
@@ -119,124 +119,114 @@ def sfx_drum_kick(start_time, amp=0.38):
     samples = int(dur * SAMPLE_RATE)
     for i in range(samples):
         t = i / SAMPLE_RATE
-        env = math.exp(-t * 28.0)
-        freq = 140.0 * math.exp(-t * 36.0) + 36.0
+        freq = 150.0 * math.exp(-t * 38.0) + 38.0
+        env = (1.0 - t / dur) ** 2.2
         val = triangle_wave(freq, t) * env * amp
         add_sample(start_idx + i, val, val)
 
 def sfx_drum_snare(start_time, amp=0.28):
     start_idx = int(start_time * SAMPLE_RATE)
-    dur = 0.13
+    dur = 0.11
     samples = int(dur * SAMPLE_RATE)
     for i in range(samples):
         t = i / SAMPLE_RATE
-        env = math.exp(-t * 22.0)
-        tone = triangle_wave(180.0, t) * 0.35
-        ns = nes_noise() * 0.75
-        val = (tone + ns) * env * amp
+        env_body = math.exp(-t * 35.0)
+        env_noise = math.exp(-t * 22.0)
+        body = triangle_wave(185.0 * math.exp(-t * 18.0), t) * env_body * 0.45
+        noise = nes_noise() * env_noise * 0.65
+        val = (body + noise) * amp
         add_sample(start_idx + i, val, val)
 
 def sfx_drum_hihat(start_time, amp=0.10):
     start_idx = int(start_time * SAMPLE_RATE)
-    dur = 0.045
+    dur = 0.035
     samples = int(dur * SAMPLE_RATE)
     for i in range(samples):
         t = i / SAMPLE_RATE
-        env = math.exp(-t * 65.0)
+        env = math.exp(-t * 85.0)
         val = nes_noise() * env * amp
-        add_sample(start_idx + i, val * 0.7, val * 1.1)
+        add_sample(start_idx + i, val * 0.8, val * 1.1)
 
 def sfx_drum_crash(start_time, amp=0.25):
     start_idx = int(start_time * SAMPLE_RATE)
-    dur = 0.45
+    dur = 0.65
     samples = int(dur * SAMPLE_RATE)
     for i in range(samples):
         t = i / SAMPLE_RATE
-        env = math.exp(-t * 7.5)
-        val = nes_noise() * env * amp
-        add_sample(start_idx + i, val * 0.9, val * 1.0)
+        env = math.exp(-t * 6.5)
+        # Filtered / shimmering metallic noise
+        s1 = math.sin(2.0 * math.pi * 3240.0 * t) * 0.2
+        s2 = math.sin(2.0 * math.pi * 4820.0 * t) * 0.2
+        val = (nes_noise() * 0.7 + s1 + s2) * env * amp
+        add_sample(start_idx + i, val * 0.9, val * 1.1)
 
 def sfx_badge_impact(start_time, pitch_scale=1.0, amp=0.28, pan=0.0):
-    """Cartoonish chiptune thud, bounce, and clatter as badge rains down and settles"""
     start_idx = int(start_time * SAMPLE_RATE)
+    dur = 0.075
+    samples = int(dur * SAMPLE_RATE)
     l_pan = 0.5 * (1.0 - pan)
     r_pan = 0.5 * (1.0 + pan)
-
-    # 1. High transient clatter / click (18ms)
-    click_dur = 0.018
+    
+    # 1. Low punchy thud (tri drop)
+    f_thud = 110.0 * pitch_scale
+    for i in range(samples):
+        t = i / SAMPLE_RATE
+        env = math.exp(-t * 55.0)
+        cur_f = f_thud * math.exp(-t * 28.0) + 38.0
+        val = triangle_wave(cur_f, t) * env * amp * 0.75
+        add_sample(start_idx + i, val * l_pan, val * r_pan)
+        
+    # 2. Clattering plastic/stone click (pulse burst)
+    click_dur = 0.022
     click_samples = int(click_dur * SAMPLE_RATE)
+    click_f = 640.0 * pitch_scale
     for i in range(click_samples):
         t = i / SAMPLE_RATE
         env = math.exp(-t * 110.0)
-        click_val = (nes_noise() * 0.65 + pulse_wave(1800.0 * pitch_scale, t, duty=0.25, harmonics=3) * 0.45) * env * amp * 0.75
-        add_sample(start_idx + i, click_val * l_pan, click_val * r_pan)
-
-    # 2. Main low-end thud (100ms)
-    thud_dur = 0.10
-    thud_samples = int(thud_dur * SAMPLE_RATE)
-    for i in range(thud_samples):
-        t = i / SAMPLE_RATE
-        env = math.exp(-t * 30.0)
-        freq = 190.0 * pitch_scale * math.exp(-t * 28.0) + 40.0
-        val = (triangle_wave(freq, t) + 0.22 * nes_noise()) * env * amp
+        val = (pulse_wave(click_f, t, duty=0.125, harmonics=4) * 0.6 + nes_noise() * 0.4) * env * amp * 0.45
         add_sample(start_idx + i, val * l_pan, val * r_pan)
 
-    # 3. Cartoonish bounce rebound blip (70ms)
-    bounce_time = start_time + 0.065
-    bounce_idx = int(bounce_time * SAMPLE_RATE)
-    bounce_dur = 0.07
-    bounce_samples = int(bounce_dur * SAMPLE_RATE)
-    for i in range(bounce_samples):
-        t = i / SAMPLE_RATE
-        env = math.exp(-t * 35.0)
-        b_freq = 320.0 * pitch_scale * math.exp(-t * 20.0) + 130.0
-        val = pulse_wave(b_freq, t, duty=0.25, harmonics=4) * env * amp * 0.40
-        add_sample(bounce_idx + i, val * l_pan, val * r_pan)
-
 def sfx_alarm_pulse(start_time, freq=880.0, dur=0.085, amp=0.22, pan=0.0):
-    """Urgent 8-bit alarm pulse with rising chirp bite"""
     start_idx = int(start_time * SAMPLE_RATE)
     samples = int(dur * SAMPLE_RATE)
     l_pan = 0.5 * (1.0 - pan)
     r_pan = 0.5 * (1.0 + pan)
     for i in range(samples):
         t = i / SAMPLE_RATE
-        env = (1.0 - t / dur) ** 0.5
-        # Slight upward pitch chirp for urgent distress feeling
-        f = freq + 150.0 * (t / dur)
-        val = pulse_wave(f, t, duty=0.125, harmonics=5) * env * amp
+        # Crisp square pulse with quick exponential decay
+        env = math.exp(-t * 12.0)
+        # Sub-harmonic growl for alarm bite
+        val = (square_wave(freq, t, harmonics=5) * 0.75 + 
+               square_wave(freq * 0.5, t, harmonics=3) * 0.35) * env * amp
         add_sample(start_idx + i, val * l_pan, val * r_pan)
 
 def sfx_badge_slot(start_time, freq, amp=0.14, pan=0.0):
-    """High sparkle chime as badge slots into the vault"""
     start_idx = int(start_time * SAMPLE_RATE)
-    dur = 0.11
+    dur = 0.065
     samples = int(dur * SAMPLE_RATE)
     l_pan = 0.5 * (1.0 - pan)
     r_pan = 0.5 * (1.0 + pan)
     for i in range(samples):
         t = i / SAMPLE_RATE
-        env = math.exp(-t * 24.0)
-        val = (pulse_wave(freq, t, duty=0.125, harmonics=4) + 
-               0.3 * sine_wave(freq * 2.0, t)) * env * amp
+        env = math.exp(-t * 60.0)
+        val = pulse_wave(freq, t, duty=0.125, harmonics=4) * env * amp
         add_sample(start_idx + i, val * l_pan, val * r_pan)
 
 def sfx_mechanical_keystroke(start_time, amp=0.16, pan=0.0, is_enter=False):
-    """Crisp mechanical terminal keyboard click and keycap clack"""
     start_idx = int(start_time * SAMPLE_RATE)
     l_pan = 0.5 * (1.0 - pan)
     r_pan = 0.5 * (1.0 + pan)
-
-    # 1. High switch click (10ms)
-    click_dur = 0.012
+    
+    # 1. High-frequency switch click (5ms)
+    click_dur = 0.006
     click_samples = int(click_dur * SAMPLE_RATE)
-    click_freq = 4200.0 if not is_enter else 3400.0
+    click_freq = 3400.0 if not is_enter else 2200.0
     for i in range(click_samples):
         t = i / SAMPLE_RATE
-        env = math.exp(-t * 160.0)
-        click_val = (pulse_wave(click_freq, t, duty=0.25, harmonics=3) * 0.6 + nes_noise() * 0.4) * env * amp
+        env = math.exp(-t * 300.0)
+        click_val = (pulse_wave(click_freq, t, duty=0.125, harmonics=3) * 0.6 + nes_noise() * 0.4) * env * amp * 0.8
         add_sample(start_idx + i, click_val * l_pan, click_val * r_pan)
-
+        
     # 2. Keycap bottom-out body clack (22ms)
     clack_dur = 0.024 if not is_enter else 0.035
     clack_samples = int(clack_dur * SAMPLE_RATE)
@@ -246,6 +236,18 @@ def sfx_mechanical_keystroke(start_time, amp=0.16, pan=0.0, is_enter=False):
         env = math.exp(-t * 80.0)
         clack_val = triangle_wave(clack_freq, t) * env * amp * (1.4 if is_enter else 0.85)
         add_sample(start_idx + i, clack_val * l_pan, clack_val * r_pan)
+
+def sfx_metallic_click(start_time, f1=2800.0, f2=4200.0, amp=0.26):
+    s_idx = int(start_time * SAMPLE_RATE)
+    dur = 0.025
+    samples = int(dur * SAMPLE_RATE)
+    for i in range(samples):
+        t = i / SAMPLE_RATE
+        env = math.exp(-t * 140.0)
+        val = (pulse_wave(f1, t, duty=0.125, harmonics=3) * 0.6 + 
+               sine_wave(f2, t) * 0.4 + 
+               nes_noise() * 0.4) * env * amp
+        add_sample(s_idx + i, val * 0.8, val * 1.1)
 
 # ----------------- SECTION 1: 0.0s - 2.5s (PANIC ALARM & BADGE AVALANCHE) -----------------
 print("Synthesizing Section 1: Panic Alarm & Badge Avalanche Torrent (0.0s - 2.5s)...")
@@ -279,8 +281,8 @@ for idx, b_time in enumerate(badge_fall_times):
     sfx_badge_impact(b_time, pitch_scale=pitch_mod, amp=amp_mod, pan=pan_mod)
 
 
-# ----------------- SECTION 2: 2.5s - 7.5s (WIZARD HAT, LEVEL UP, VORTEX & VAULT LOCK) -----------------
-print("Synthesizing Section 2: Jump, Level-Up Fanfare, Centripetal Vortex & Vault Lock (2.5s - 7.5s)...")
+# ----------------- SECTION 2: 2.5s - 7.0s (HAT EQUIP, VORTEX RISER & VAULT LOCK) -----------------
+print("Synthesizing Section 2: Hat Equip, Vortex Riser & Vault Lock (2.5s - 7.0s)...")
 
 # 2.5s: Whoosh / spring jump sfx as Claude leaps to catch the hat
 jump_start = 2.50
@@ -298,12 +300,12 @@ for i in range(jump_samples):
     pan = -0.3 + (t / jump_dur) * 0.6
     add_sample(jump_idx + i, val * (0.5 * (1.0 - pan)), val * (0.5 * (1.0 + pan)))
 
-# 3.2s - 3.7s: Level-up fanfare / bright arpeggio with celebratory sparkle chime as wizard hat equips
+# 3.10s - 3.50s: Level-up fanfare / bright arpeggio with celebratory sparkle chime as wizard hat equips
 level_up_notes = [523.25, 659.25, 783.99, 987.77, 1046.50, 1318.51, 1567.98, 2093.00] # C5 to C7
-step = 0.042
+step = 0.040
 for idx, freq in enumerate(level_up_notes):
-    st = 3.20 + idx * step
-    d = 0.32 if idx == len(level_up_notes) - 1 else 0.08
+    st = 3.10 + idx * step
+    d = 0.28 if idx == len(level_up_notes) - 1 else 0.08
     pan = -0.4 + (idx / len(level_up_notes)) * 0.8
     note(st, freq, dur=d, amp=0.32 if idx == len(level_up_notes) - 1 else 0.24,
          wave_type='pulse', duty=0.25, pan=pan)
@@ -311,12 +313,12 @@ for idx, freq in enumerate(level_up_notes):
 # Celebratory sparkle chimes
 sparkle_freqs = [2093.00, 2637.02, 3135.96, 4186.01]
 for s_idx, sf in enumerate(sparkle_freqs):
-    st_s = 3.52 + s_idx * 0.045
-    note(st_s, sf, dur=0.24, amp=0.16, wave_type='pulse', duty=0.125, pan=(-0.5 if s_idx % 2 == 0 else 0.5))
+    st_s = 3.42 + s_idx * 0.040
+    note(st_s, sf, dur=0.22, amp=0.16, wave_type='pulse', duty=0.125, pan=(-0.5 if s_idx % 2 == 0 else 0.5))
 
-# 3.7s - 6.5s: Centripetal vortex riser + swirling frequency sweep + magic spell casting hum
-vortex_start = 3.70
-vortex_end = 6.50
+# 3.5s - 6.2s: Centripetal vortex riser + swirling frequency sweep + magic spell casting hum
+vortex_start = 3.50
+vortex_end = 6.20
 vortex_dur = vortex_end - vortex_start
 vortex_samples = int(vortex_dur * SAMPLE_RATE)
 vortex_idx = int(vortex_start * SAMPLE_RATE)
@@ -331,8 +333,8 @@ for i in range(vortex_samples):
            sine_wave(97.99, t) * 0.35 + 
            sine_wave(130.81, t) * 0.2) * 0.16
     
-    # Swirling frequency sweep (240Hz ramping to 1350Hz)
-    sweep_freq = 240.0 * math.exp(prog * 1.72)
+    # Swirling frequency sweep (240Hz ramping to 1400Hz)
+    sweep_freq = 240.0 * math.exp(prog * 1.76)
     rot_speed = 8.0 + prog * 10.0
     pan = math.sin(2.0 * math.pi * rot_speed * t) * 0.75
     l_pan = 0.5 * (1.0 - pan)
@@ -343,35 +345,21 @@ for i in range(vortex_samples):
     
     add_sample(vortex_idx + i, (hum + sweep_val) * l_pan, (hum + sweep_val) * r_pan)
 
-# Rapid successive sparkle chimes (sfx_badge_slot) as badges swirl into the vault (3.85s - 6.45s)
+# Accelerating slot chimes as badges swirl into the vault (3.65s - 6.15s)
 slot_chime_notes = [1046.50, 1174.66, 1318.51, 1567.98, 1760.00, 2093.00, 2349.32, 2637.02]
 num_slots = 28
 for i in range(num_slots):
-    # Accelerating timing
-    t_slot = vortex_start + 0.15 + (i / num_slots) ** 1.35 * 2.50
+    t_slot = vortex_start + 0.15 + (i / num_slots) ** 1.35 * 2.45
     f_slot = slot_chime_notes[i % len(slot_chime_notes)]
     slot_pan = math.sin(i * 1.2) * 0.7
     sfx_badge_slot(t_slot, f_slot, amp=0.15, pan=slot_pan)
 
-# 6.5s - 7.5s: Mechanical vault latch click / lock sound + clean confirmation chime
-# 1) Sharp double metallic pulse (6.58s and 6.68s)
-def sfx_metallic_click(start_time, f1=2800.0, f2=4200.0, amp=0.26):
-    s_idx = int(start_time * SAMPLE_RATE)
-    dur = 0.025
-    samples = int(dur * SAMPLE_RATE)
-    for i in range(samples):
-        t = i / SAMPLE_RATE
-        env = math.exp(-t * 140.0)
-        val = (pulse_wave(f1, t, duty=0.125, harmonics=3) * 0.6 + 
-               sine_wave(f2, t) * 0.4 + 
-               nes_noise() * 0.4) * env * amp
-        add_sample(s_idx + i, val * 0.8, val * 1.1)
+# 6.25s - 7.0s: Mechanical vault latch click / lock sound + clean confirmation chime
+sfx_metallic_click(6.28, f1=2800.0, f2=4200.0, amp=0.28)
+sfx_metallic_click(6.38, f1=2200.0, f2=3300.0, amp=0.30)
 
-sfx_metallic_click(6.58, f1=2800.0, f2=4200.0, amp=0.28)
-sfx_metallic_click(6.68, f1=2200.0, f2=3300.0, amp=0.30)
-
-# 2) Solid vault latch thud (6.72s)
-thud_idx = int(6.72 * SAMPLE_RATE)
+# Solid vault latch thud (6.42s)
+thud_idx = int(6.42 * SAMPLE_RATE)
 thud_dur = 0.18
 for i in range(int(thud_dur * SAMPLE_RATE)):
     t = i / SAMPLE_RATE
@@ -380,106 +368,24 @@ for i in range(int(thud_dur * SAMPLE_RATE)):
     val = (triangle_wave(freq, t) * 0.85 + nes_noise() * 0.25) * env * 0.42
     add_sample(thud_idx + i, val, val)
 
-# 3) Clean confirmation chime when context drops to 2% (6.90s - 7.45s)
-note(6.90, G6, dur=0.22, amp=0.24, wave_type='pulse', duty=0.125, pan=-0.2)
-note(7.02, C7, dur=0.48, amp=0.30, wave_type='pulse', duty=0.25, pan=0.2)
-# Shimmering harmonic ring
-note(7.05, E7, dur=0.40, amp=0.16, wave_type='sine', pan=0.3)
+# Clean confirmation chime when context drops to 2% (6.60s - 7.00s)
+note(6.60, G6, dur=0.22, amp=0.24, wave_type='pulse', duty=0.125, pan=-0.2)
+note(6.72, C7, dur=0.45, amp=0.30, wave_type='pulse', duty=0.25, pan=0.2)
+note(6.75, E7, dur=0.40, amp=0.16, wave_type='sine', pan=0.3)
 
 
-# ----------------- SECTION 3: 7.5s - 12.5s (VICTORY FANFARE & CHIPTUNE GROOVE) -----------------
-print("Synthesizing Section 3: Victory Fanfare & Upbeat Chiptune Groove (7.5s - 12.5s)...")
+# ----------------- SECTION 3: 7.0s - 10.5s (TERMINAL BLIP & 18 TYPING SWITCH CLICKS) -----------------
+print("Synthesizing Section 3: Terminal Popup Blip & 18 Typing Switch Clicks (7.0s - 10.5s)...")
 
-BPM = 150
-BEAT = 60.0 / BPM # 0.40s
-SIXTEENTH = BEAT / 4.0 # 0.10s
+# 7.0s: Soft window open blip (smooth rising 2-tone chime)
+note(7.00, G5, dur=0.06, amp=0.20, wave_type='sine', pan=-0.2)
+note(7.06, C6, dur=0.09, amp=0.24, wave_type='sine', pan=0.2)
 
-# Celebratory crash cymbal at onset of victory groove
-sfx_drum_crash(7.50, amp=0.30)
-sfx_drum_crash(11.90, amp=0.32)
-
-# Drum Section (7.5s to 12.3s)
-t_beat = 7.50
-bar_count = 0
-while t_beat < 12.25:
-    # Kick on beat 1 and 3
-    sfx_drum_kick(t_beat, amp=0.34)
-    sfx_drum_hihat(t_beat + SIXTEENTH, amp=0.09)
-    # Snare on beat 2 and 4
-    sfx_drum_snare(t_beat + BEAT * 0.5, amp=0.27)
-    sfx_drum_hihat(t_beat + BEAT * 0.5 + SIXTEENTH, amp=0.09)
-    t_beat += BEAT
-
-# Hi-hat 16th subdivision groove
-t_hh = 7.50
-while t_hh < 12.25:
-    sfx_drum_hihat(t_hh, amp=0.06)
-    t_hh += SIXTEENTH
-
-# Walking Triangle Bassline (7.5s to 12.3s)
-bass_sequence = [
-    # Bar 1: C Major (7.5s - 9.1s)
-    (7.50, C3), (7.70, C3), (7.90, E3), (8.10, G3),
-    (8.30, C4), (8.50, G3), (8.70, E3), (8.90, D3),
-    # Bar 2: A Minor -> F Major (9.1s - 10.7s)
-    (9.10, A2), (9.30, A2), (9.50, C3), (9.70, E3),
-    (9.90, F3), (10.10, A3), (10.30, C4), (10.50, A3),
-    # Bar 3: G Major -> C Cadence (10.7s - 12.3s)
-    (10.70, G3), (10.90, G3), (11.10, B3), (11.30, D4),
-    (11.50, G3), (11.70, F3), (11.90, C3), (12.10, C3)
-]
-for bt, bf in bass_sequence:
-    note(bt, bf, dur=SIXTEENTH * 1.8, amp=0.26, wave_type='triangle', pan=0.0)
-
-# Bright Upbeat Lead Melody (Pulse 25% + detuned stereo pulse)
-melody_sequence = [
-    # Phrase 1: Festive ascent (7.5s - 9.0s)
-    (7.50, G4, 0.12, 0.28),
-    (7.65, C5, 0.28, 0.30),
-    (8.00, E5, 0.28, 0.30),
-    (8.30, G5, 0.48, 0.32),
-    (8.85, A5, 0.18, 0.28),
-    (9.00, G5, 0.18, 0.28),
-    # Phrase 2: Joyful leaps (9.1s - 10.6s)
-    (9.20, C6, 0.48, 0.34),
-    (9.70, B5, 0.18, 0.28),
-    (9.90, A5, 0.18, 0.28),
-    (10.15, G5, 0.48, 0.30),
-    # Phrase 3: Heroic cadence to sustained C6 resolution (10.7s - 12.4s)
-    (10.70, F5, 0.18, 0.28),
-    (10.90, A5, 0.18, 0.28),
-    (11.15, D6, 0.32, 0.32),
-    (11.50, E6, 0.20, 0.32),
-    (11.70, D6, 0.20, 0.32),
-    (11.90, C6, 0.65, 0.36) # Sustained resolution
-]
-for mt, mf, md, ma in melody_sequence:
-    # Lead voice
-    note(mt, mf, dur=md, amp=ma, wave_type='pulse', duty=0.25, pan=-0.15)
-    # Detuned chorus duplicate for wide 16-bit stereophonic presence
-    note(mt, mf * 1.004, dur=md, amp=ma * 0.85, wave_type='pulse', duty=0.50, pan=0.15)
-    # Harmony voice a third below
-    note(mt, mf * 0.80, dur=md, amp=ma * 0.45, wave_type='pulse', duty=0.125, pan=0.25)
-
-# Sparkle dust accompanying final chord
-for s_idx in range(6):
-    note(11.95 + s_idx * 0.06, random.choice([1567.98, 2093.00, 2637.02, 3135.96]),
-         dur=0.18, amp=0.12, wave_type='pulse', duty=0.125, pan=random.uniform(-0.6, 0.6))
-
-
-# ----------------- SECTION 4: 12.5s - 18.0s (TERMINAL KEYBOARD FOLEY & LEVITATION) -----------------
-print("Synthesizing Section 4: Soft Window Blip, Terminal Typing Foley & Levitation (12.5s - 18.0s)...")
-
-# 12.5s: Soft window open blip (smooth rising 2-tone chime)
-note(12.50, G5, dur=0.06, amp=0.20, wave_type='sine', pan=-0.2)
-note(12.56, C6, dur=0.09, amp=0.24, wave_type='sine', pan=0.2)
-
-# 13.0s - 14.8s: Crisp mechanical terminal keyboard typing foley
-# 18 distinct keystrokes with realistic timing jitter simulating terminal typing
+# 7.35s - 9.40s: 18 distinct typing switch clicks
 keystroke_times = [
-    13.02, 13.11, 13.19, 13.29, 13.38, 13.46,
-    13.57, 13.66, 13.75, 13.87, 13.96, 14.05,
-    14.16, 14.25, 14.34, 14.43, 14.52, 14.68 # Enter key at 14.68
+    7.35, 7.45, 7.54, 7.65, 7.76, 7.86,
+    7.97, 8.08, 8.19, 8.32, 8.43, 8.54,
+    8.66, 8.77, 8.88, 8.99, 9.10, 9.35 # Enter key at 9.35
 ]
 for k_idx, kt in enumerate(keystroke_times):
     is_ent = (k_idx == len(keystroke_times) - 1)
@@ -487,18 +393,21 @@ for k_idx, kt in enumerate(keystroke_times):
     k_amp = 0.22 if is_ent else random.uniform(0.14, 0.19)
     sfx_mechanical_keystroke(kt, amp=k_amp, pan=k_pan, is_enter=is_ent)
 
-# Carriage return acknowledge beep at 14.80s
-note(14.80, A6, dur=0.065, amp=0.18, wave_type='square', pan=0.0)
+# Carriage return acknowledge beep at 9.50s
+note(9.50, A6, dur=0.065, amp=0.18, wave_type='square', pan=0.0)
 
-# 15.0s - 17.5s: Magic casting chime, low resonant levitation hum + magical harmonic shimmer
-# 1) Magic casting chime at 15.0s (glockenspiel arpeggio)
+
+# ----------------- SECTION 4: 10.5s - 14.0s (GLOCKENSPIEL WAND CHIME & LEVITATION HUM) -----------------
+print("Synthesizing Section 4: Glockenspiel Wand Chime & Levitation Hum (10.5s - 14.0s)...")
+
+# 1) Magic casting chime at 10.50s (glockenspiel arpeggio)
 lev_arpeggio = [659.25, 830.61, 987.77, 1318.51, 1661.22] # E5, G#5, B5, E6, G#6
 for l_idx, lf in enumerate(lev_arpeggio):
-    note(15.00 + l_idx * 0.045, lf, dur=0.25, amp=0.18, wave_type='pulse', duty=0.125, pan=-0.4 + l_idx * 0.2)
+    note(10.50 + l_idx * 0.045, lf, dur=0.25, amp=0.18, wave_type='pulse', duty=0.125, pan=-0.4 + l_idx * 0.2)
 
-# 2) Low resonant levitation hum (15.0s to 17.5s)
-lev_start = 15.00
-lev_dur = 2.50
+# 2) Low resonant levitation hum (10.5s to 13.8s)
+lev_start = 10.50
+lev_dur = 3.30
 lev_samples = int(lev_dur * SAMPLE_RATE)
 lev_idx = int(lev_start * SAMPLE_RATE)
 
@@ -515,21 +424,20 @@ for i in range(lev_samples):
     pan = math.sin(2.0 * math.pi * 0.6 * t) * 0.4
     add_sample(lev_idx + i, drone * 0.5 * (1.0 - pan), drone * 0.5 * (1.0 + pan))
 
-# 3) Magical harmonic shimmer as book floats across shelf (15.3s to 17.4s)
+# 3) Magical harmonic shimmer as book floats across shelf (10.8s to 13.7s)
 shimmer_notes = [1318.51, 1661.22, 1975.53, 2349.32, 2637.02, 3322.44]
-for s_i in range(16):
-    t_shim = 15.30 + s_i * 0.13
+for s_i in range(18):
+    t_shim = 10.80 + s_i * 0.15
     f_shim = shimmer_notes[s_i % len(shimmer_notes)]
     shim_pan = math.sin(s_i * 0.8) * 0.75
     note(t_shim, f_shim, dur=0.30, amp=0.13, wave_type='pulse', duty=0.125, pan=shim_pan)
 
 
-# ----------------- SECTION 5: 18.0s - 22.0s (ACTIVATED STINGER, SWELL & BLOOM DISSOLVE) -----------------
-print("Synthesizing Section 5: ACTIVATED Stinger, Swell & Radiant Bloom Dissolve (18.0s - 22.0s)...")
+# ----------------- SECTION 5: 14.0s - 16.0s ('ACTIVATED' POWER CHORD) -----------------
+print("Synthesizing Section 5: 'ACTIVATED' Power Chord (14.0s - 16.0s)...")
 
-# 18.0s: Crisp energetic "⚡ ACTIVATED" prompt stinger (electric synth zap / power-up chime)
-# 1) Electric synth zap
-zap_idx = int(18.00 * SAMPLE_RATE)
+# 14.00s: Electric synth zap
+zap_idx = int(14.00 * SAMPLE_RATE)
 zap_dur = 0.055
 for i in range(int(zap_dur * SAMPLE_RATE)):
     t = i / SAMPLE_RATE
@@ -538,14 +446,22 @@ for i in range(int(zap_dur * SAMPLE_RATE)):
     val = (pulse_wave(freq, t, duty=0.125, harmonics=4) * 0.7 + nes_noise() * 0.4) * env * 0.32
     add_sample(zap_idx + i, val * 0.9, val * 1.1)
 
-# 2) Power-up chord stinger hit
+# 14.02s: Power-up chord stinger hit
 activated_chord = [C5, G5, C6, E6, G6]
 for cf in activated_chord:
-    note(18.02, cf, dur=0.45, amp=0.22, wave_type='pulse', duty=0.25, pan=0.0)
+    note(14.02, cf, dur=0.55, amp=0.22, wave_type='pulse', duty=0.25, pan=0.0)
 
-# 19.5s - 21.0s: Book opening rustle / whoosh + swelling magical chord / harmonic riser
-# 1) Book opening flutter & whoosh (19.50s - 19.85s)
-for f_time in [19.50, 19.57, 19.65, 19.74]:
+# Sustained chord with sparkles / chimes
+for s_i in range(8):
+    note(14.20 + s_i * 0.15, random.choice([1567.98, 2093.00, 2637.02, 3135.96]),
+         dur=0.22, amp=0.12, wave_type='pulse', duty=0.125, pan=random.uniform(-0.5, 0.5))
+
+
+# ----------------- SECTION 6: 16.0s - 18.0s (SWELLING CHORD RISER & RADIANT LOOP CHIME) -----------------
+print("Synthesizing Section 6: Swelling Chord Riser & Radiant Loop Chime (16.0s - 18.0s)...")
+
+# 1) Book opening flutter & whoosh (16.00s - 16.25s)
+for f_time in [16.00, 16.07, 16.15, 16.24]:
     s_idx = int(f_time * SAMPLE_RATE)
     for i in range(int(0.025 * SAMPLE_RATE)):
         t = i / SAMPLE_RATE
@@ -553,9 +469,9 @@ for f_time in [19.50, 19.57, 19.65, 19.74]:
         val = nes_noise() * env * 0.18
         add_sample(s_idx + i, val * 0.8, val * 1.1)
 
-# 2) Swelling magical chord / harmonic riser (19.8s to 21.0s)
-riser_start = 19.80
-riser_end = 21.00
+# 2) Swelling magical chord / harmonic riser (16.20s to 17.00s)
+riser_start = 16.20
+riser_end = 17.00
 riser_dur = riser_end - riser_start
 riser_samples = int(riser_dur * SAMPLE_RATE)
 riser_idx = int(riser_start * SAMPLE_RATE)
@@ -564,44 +480,40 @@ swell_chord = [C4, G4, B4, D5, E5, G5, B5] # Lush Cmaj9 voicing
 for i in range(riser_samples):
     t = i / SAMPLE_RATE
     prog = t / riser_dur
-    # Exponential crescendo
     env = 0.04 + 0.34 * (prog ** 2.2)
     val = 0.0
     for note_f in swell_chord:
         val += sine_wave(note_f, t) * 0.22 + pulse_wave(note_f, t, duty=0.25, harmonics=2) * 0.12
-    # Harmonic shimmer riser sweep
     riser_sweep_freq = 800.0 * math.exp(prog * 1.3)
     sweep_tone = sine_wave(riser_sweep_freq, t) * 0.15 * prog
     total_val = (val + sweep_tone) * env
     pan = math.sin(prog * math.pi * 3.0) * 0.35
     add_sample(riser_idx + i, total_val * 0.5 * (1.0 - pan), total_val * 0.5 * (1.0 + pan))
 
-# 21.0s - 22.0s: Radiant glowing flash / bloom chime with ethereal high frequency shimmer
-# 1) Bloom impact chord at 21.00s
+# 3) Radiant bloom impact chord at 17.00s
 bloom_chord = [C6, G6, E7, C8]
 for bf in bloom_chord:
-    note(21.00, bf, dur=0.75, amp=0.28, wave_type='pulse', duty=0.125, pan=0.0)
-    note(21.00, bf * 0.5, dur=0.65, amp=0.20, wave_type='sine', pan=0.0)
+    note(17.00, bf, dur=0.75, amp=0.28, wave_type='pulse', duty=0.125, pan=0.0)
+    note(17.00, bf * 0.5, dur=0.65, amp=0.20, wave_type='sine', pan=0.0)
 
-# 2) Multi-tap ethereal stereo reflections (delay shimmer)
+# Multi-tap ethereal stereo reflections (delay shimmer)
 echo_taps = [
-    (21.15, -0.4, 0.65),
-    (21.32,  0.4, 0.42),
-    (21.50, -0.3, 0.26),
-    (21.68,  0.3, 0.15),
-    (21.82,  0.0, 0.08)
+    (17.15, -0.4, 0.65),
+    (17.30,  0.4, 0.42),
+    (17.48, -0.3, 0.26),
+    (17.65,  0.3, 0.15),
+    (17.80,  0.0, 0.08)
 ]
 for et, epan, edecay in echo_taps:
     for bf in [G6, E7]:
-        note(et, bf, dur=0.35, amp=0.18 * edecay, wave_type='sine', pan=epan)
+        note(et, bf, dur=0.30, amp=0.18 * edecay, wave_type='sine', pan=epan)
 
-# 3) Clean dissolve to silence at 22.0s:
-# Apply smooth cosine taper from 21.85s to 22.000s ensuring exact 0.0 at the end
-fade_start = 21.85
+# 4) Clean dissolve to silence at 18.000s:
+# Apply smooth cosine taper from 17.85s to 18.000s ensuring exact 0.0 at the end
+fade_start = 17.85
 fade_idx = int(fade_start * SAMPLE_RATE)
 for i in range(fade_idx, TOTAL_SAMPLES):
     t_fade = (i - fade_idx) / (TOTAL_SAMPLES - fade_idx)
-    # Cosine taper from 1.0 down to 0.0
     scale = 0.5 * (1.0 + math.cos(math.pi * t_fade))
     left_channel[i] *= scale
     right_channel[i] *= scale
