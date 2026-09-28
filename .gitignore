@@ -50,7 +50,7 @@ brag-output-2/
 **/work/frames/
 **/work/sample_frames/
 **/work/node_modules/
-**/work/*.wav
+*.wav
 node_modules/
 
 

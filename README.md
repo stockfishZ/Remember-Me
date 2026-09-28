@@ -12,7 +12,7 @@ Remember-Me compiles installed skills into an ultra-compact, categorized catalog
 
 <br />
 
-[![RememberMe v2.0 Motion Graphic](brag-output-v3/preview.gif)](brag-output-v3/brag.mp4)
+[![RememberMe v2.0 Motion Graphic](brag-output-v4/preview.gif)](brag-output-v4/brag.mp4)
 
 <br />
 
