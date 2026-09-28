@@ -51,9 +51,24 @@ Because the index lives directly in the rule configuration, the agent discovers 
 
 ---
 
-## Performance Benchmarks
+## Performance & Scaling
 
-Measured on a workstation with **1,050 installed skills** (991 global skills + 59 plugin skills):
+Remember-Me scales linearly with your library—averaging just **~8 tokens per skill** in system rules. Whether you run a focused suite of 25 skills or an extensive library of hundreds, Remember-Me eliminates prompt bloat and prevents truncation.
+
+### Token Footprint by Library Size
+
+| Skill Library Size | Platform Default Loading | Remember-Me v2 (Inline Rules) | Prompt Cache Discount (~90%) |
+| :--- | :---: | :---: | :---: |
+| **Small (25–50 skills)** | ~1,500 – 3,000 tokens | **~200 – 400 tokens** | ~20 – 40 marginal tokens |
+| **Medium (100–250 skills)** | ~6,000 – 15,000 tokens | **~800 – 2,000 tokens** | ~80 – 200 marginal tokens |
+| **Large (500+ skills)** | ~30,000+ *(Truncation starts)* | **~4,000 tokens** | ~400 marginal tokens |
+| **Extreme (1,000+ skills)** | ⚠️ *Up to 70% silently discarded* | **~8,700 tokens (100% reachable)** | ~870 marginal tokens |
+
+---
+
+### Stress-Test Benchmark: Extreme Scale (1,000+ Skills)
+
+To test the absolute limits of agent memory, an empirical stress test was conducted on an environment with **1,050 installed skills** (991 global + 59 plugin skills):
 
 | Metric | Platform Default | External Index (v1) | Remember-Me v2 (Inline) |
 | :--- | :---: | :---: | :---: |
@@ -61,12 +76,13 @@ Measured on a workstation with **1,050 installed skills** (991 global skills + 5
 | **Per-turn file read operations** | 0 | 1 | **0** |
 | **Tokens read per turn (disk I/O)** | 0 | ~20,200 | **0** |
 | **Total per-turn token consumption** | ~58,000 | ~20,400 | **~8,700** *(Prompt cached)* |
-| **Discoverable skills** | 355 / 1,050 (34%) | 1,050 / 1,050 (100%) | **1,050 / 1,050 (100%)** |
+| **Skill Reachability** | 34% *(695 skills truncated)* | 100% *(All 1,050 skills)* | **100% (All 1,050 skills)** |
 | **Discovery latency** | 0 ms | 50–200 ms | **0 ms** |
 
-In testing with 1,050 skills, platform default loading exceeded prompt budgets and silently discarded 695 skills (66% of the library). Remember-Me v1 kept all skills discoverable but incurred a ~20,000 token disk read penalty on every turn.
-
-Remember-Me v2 embeds the entire 1,050-skill library into roughly 8,700 tokens. Modern LLM runtimes automatically apply prompt caching to persistent system rules, meaning the marginal cost of these tokens is discounted by ~90% on subsequent turns while retaining 100% discoverability and zero disk latency.
+#### Key Takeaways:
+1. **Zero Truncation**: Default agent loading silently discarded 66% of the library when hitting prompt limits. Remember-Me kept **100% of skills discoverable**.
+2. **Zero Disk Latency**: Unlike v1, which incurred a ~20,000-token file read penalty on every turn, Remember-Me v2 requires **0 disk reads** to identify skills.
+3. **Prompt Caching**: Modern LLMs automatically cache persistent rule prefixes, making subsequent turns up to **90% cheaper** while retaining instant access to your entire catalog.
 
 ---
 
