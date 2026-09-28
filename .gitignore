@@ -40,3 +40,17 @@ desktop.ini
 
 # Local catalog cache (optional)
 # SKILLS_INDEX.md is usually generated on the target machine
+
+# Stray folders & temporary outputs
+~/
+brag-output/
+brag-output-2/
+
+# Video render frames and modules
+**/work/frames/
+**/work/sample_frames/
+**/work/node_modules/
+**/work/*.wav
+node_modules/
+
+
