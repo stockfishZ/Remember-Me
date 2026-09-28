@@ -43,8 +43,7 @@ desktop.ini
 
 # Stray folders & temporary outputs
 ~/
-brag-output/
-brag-output-2/
+brag-output*/
 
 # Video render frames and modules
 **/work/frames/
