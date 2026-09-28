@@ -12,7 +12,7 @@ Remember-Me compiles installed skills into an ultra-compact, categorized catalog
 
 <br />
 
-[![RememberMe v2.0 Launch Demo](https://github.com/user-attachments/assets/7c0a510f-5a04-4ffa-b8ac-e05ba175c269)](https://github.com/user-attachments/assets/a1031475-3e3f-4c37-9f8d-c7e253446dd2)
+<img src="https://github.com/user-attachments/assets/7c0a510f-5a04-4ffa-b8ac-e05ba175c269" alt="RememberMe v2.0 Launch Demo" width="100%" />
 
 <br />
 
