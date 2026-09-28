@@ -8,7 +8,15 @@ Remember-Me compiles installed skills into an ultra-compact, categorized catalog
 [![Python: 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue.svg)]()
 [![Zero External Dependencies](https://img.shields.io/badge/Dependencies-Zero-green.svg)]()
 
-https://github.com/user-attachments/assets/a1031475-3e3f-4c37-9f8d-c7e253446dd2
+<div align="center">
+
+<br />
+
+[![RememberMe v2.0 Launch Demo](https://github.com/user-attachments/assets/7c0a510f-5a04-4ffa-b8ac-e05ba175c269)](https://github.com/user-attachments/assets/a1031475-3e3f-4c37-9f8d-c7e253446dd2)
+
+<br />
+
+</div>
 
 ---
 
